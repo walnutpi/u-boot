@@ -103,14 +103,14 @@ static unsigned int single_read(struct udevice *dev, fdt_addr_t reg)
 
 	switch (pdata->width) {
 	case 8:
-		return readb(reg);
+		return readb((void*)reg);
 	case 16:
-		return readw(reg);
+		return readw((void*)reg);
 	default: /* 32 bits */
-		return readl(reg);
+		return readl((void*)reg);
 	}
 
-	return readb(reg);
+	return readb((void*)reg);
 }
 
 static void single_write(struct udevice *dev, unsigned int val, fdt_addr_t reg)
@@ -119,13 +119,13 @@ static void single_write(struct udevice *dev, unsigned int val, fdt_addr_t reg)
 
 	switch (pdata->width) {
 	case 8:
-		writeb(val, reg);
+		writeb(val, (void*)reg);
 		break;
 	case 16:
-		writew(val, reg);
+		writew(val, (void*)reg);
 		break;
 	default: /* 32 bits */
-		writel(val, reg);
+		writel(val, (void*)reg);
 	}
 }
 
@@ -301,7 +301,7 @@ static int single_pin_compare(const void *s1, const void *s2)
  * @dev: Pointer to single pin configuration device which is the parent of
  *       the pins node holding the pin configuration data.
  * @pins: Pointer to the first element of an array of register/value pairs
- *        of type 'u32'. Each such pair describes the pin to be configured 
+ *        of type 'u32'. Each such pair describes the pin to be configured
  *        and the value to be used for configuration.
  *        The value can either be a simple value if #pinctrl-cells = 1
  *        or a configuration value and a pin mux mode value if it is 2
