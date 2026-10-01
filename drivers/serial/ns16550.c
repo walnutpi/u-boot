@@ -529,11 +529,29 @@ int ns16550_serial_probe(struct udevice *dev)
 			return ret;
 	}
 
-	ret = reset_get_bulk(dev, &reset_bulk);
-	if (!ret)
-		reset_deassert_bulk(&reset_bulk);
-
 	com_port->plat = dev_get_plat(dev);
+
+	ret = reset_get_bulk(dev, &reset_bulk);
+	if (!ret) {
+		/*
+		 * On Allwinner H616 the DesignWare UART receiver can be left
+		 * (by BROM/SPL) in a state where each received byte only
+		 * reaches the RX FIFO once the next start bit arrives, so the
+		 * console always lags one character behind. Pulse the reset
+		 * to clear it, after letting pending output drain.
+		 */
+		if (IS_ENABLED(CONFIG_ARCH_SUNXI)) {
+			ulong start = get_timer(0);
+
+			/* bounded: a UART still held in reset reads LSR as 0 */
+			while (!(serial_in(&com_port->lsr) & UART_LSR_TEMT) &&
+			       get_timer(start) < 10)
+				;
+			reset_assert_bulk(&reset_bulk);
+		}
+		reset_deassert_bulk(&reset_bulk);
+	}
+
 	ns16550_init(com_port, -1);
 
 	return 0;
